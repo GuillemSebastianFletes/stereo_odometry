@@ -44,6 +44,7 @@ add_executable(stereo_odometry_node src/stereo_odometry_node.cpp)
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(stereo_odometry_node
+   stereo_odometry
    ${catkin_LIBRARIES}
    ${OpenCV_LIBRARIES}
    ${BOOST_LIBRARIES}
