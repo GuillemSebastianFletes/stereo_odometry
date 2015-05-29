@@ -21,6 +21,7 @@
 #include <math.h>
 #include <std_msgs/Float64.h>
 
+
 using namespace cv;
 using namespace std;
 using namespace sensor_msgs;
@@ -32,18 +33,16 @@ class stereo_odometry
     //methods before args.
 private:
 
-    void translation_calculus(Mat &final_image, Mat &mask);
-    void rotation_calculus(Mat &final_image);
     bool first_execution_;
-    Mat prev_image_;
-    Mat prev_mask_;
+    Mat prev_image_left_;
+    Mat prev_image_right_;
 
 public:
 
     stereo_odometry();
     ~stereo_odometry();
     void init();
-    void calculus( Mat &final_image, Mat &mask);
+    void calculus( Mat &left_image, Mat &right_image);
     std_msgs::Float64 translation_;
     std_msgs::Float64 rotation_;
 };

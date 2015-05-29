@@ -26,14 +26,14 @@ include_directories(
 
 
 ## Declare a cpp library
- add_library(stereo_odometry src/stereo_odometry.cpp)
- target_link_libraries(stereo_odometry
-  ${catkin_LIBRARIES}
-  ${OpenCV_LIBRARIES}
-  ${BOOST_LIBRARIES}
-  ${PCL_COMMON_LIBRARIES}
-  ${PCL_IO_LIBRARIES}
-)
+# add_library(stereo_odometry src/stereo_odometry.cpp)
+# target_link_libraries(stereo_odometry
+#  ${catkin_LIBRARIES}
+#  ${OpenCV_LIBRARIES}
+#  ${BOOST_LIBRARIES}
+#  ${PCL_COMMON_LIBRARIES}
+#  ${PCL_IO_LIBRARIES}
+#)
 
 ## Declare a cpp executable
 add_executable(stereo_odometry_node src/stereo_odometry_node.cpp)
@@ -44,7 +44,7 @@ add_executable(stereo_odometry_node src/stereo_odometry_node.cpp)
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(stereo_odometry_node
-   stereo_odometry
+#   stereo_odometry
    ${catkin_LIBRARIES}
    ${OpenCV_LIBRARIES}
    ${BOOST_LIBRARIES}
