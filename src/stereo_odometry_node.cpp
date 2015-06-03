@@ -1,25 +1,25 @@
 #include <iostream>
+#include <cstdio>
+#include <ctime>
+#include <string>
+#include <vector>
 #include <fstream>
 #include <cmath>
 #include <math.h>
 #include <sstream>
 #include <stdio.h>
 #include <stdlib.h>
-//#include <ros/ros.h>
-//#include <sensor_msgs/Image.h>
-//#include <sensor_msgs/image_encodings.h>
-//#include <geometry_msgs/Point.h>
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
-#include "opencv2/video/tracking.hpp"
-//#include <cv_bridge/cv_bridge.h>
-//#include <image_transport/image_transport.h>
-//#include <message_filters/subscriber.h>
-//#include <message_filters/time_synchronizer.h>
-#include <cmath>
-#include <math.h>
-//#include <std_msgs/Float64.h>
+#include <opencv2/features2d/features2d.hpp>
+#include <opencv2/legacy/legacy.hpp>
+#include <opencv2/objdetect/objdetect.hpp>
+#include <opencv2/nonfree/nonfree.hpp>
+#include <opencv2/nonfree/features2d.hpp>
+
+
+
 
 
 using namespace cv;
@@ -27,30 +27,89 @@ using namespace std;
 
 int main( int argc, char** argv )
 {
+    //execution time variables
+    std::clock_t start;
+    double duration;
+
+    //path variables
     char path[] = "/home/guillem/07/image_0/";
     char format[] = ".png";
     char name[50];
     char name_old[50];
     int n;
 
+    //images initialitation
     Mat actual_frame;
     Mat previous_frame;
+    Mat output_actual;
+    Mat output_old;
 
-    for (int i = 1; i < 1101; i++) //cargar la secuencia imagenes
+    //SIFT algorith variables
+    std::vector<cv::KeyPoint> keypoints_actual;
+    std::vector<cv::KeyPoint> keypoints_old;
+    int nfeatures=0;
+    int nOctaveLayers=3;
+    double contrastThreshold=0.09;
+    double edgeThreshold=10;
+    double sigma=1.6;
+
+    SiftFeatureDetector detector (nfeatures, nOctaveLayers, contrastThreshold,
+                                  edgeThreshold, sigma);
+    SiftDescriptorExtractor extractor;
+
+    //cv::SiftFeatureDetector detector;
+
+    //Matching algorithm variables
+    Mat descriptors_actual,descriptors_old;
+    BruteForceMatcher<L2 <float> > matcher;
+    cv::vector<cv::DMatch> matches;
+    cv::Mat img_matches;
+
+    for (int i = 1; i < 1101; i++)
     {
+        start = std::clock();
 
+        ///image name initialitation
         n = sprintf(name,"%s%.6d%s", path, i, format);
         n = sprintf(name_old,"%s%.6d%s",path,i-1,format);
-        cout << name << "   " << name_old << endl;
+        // cout << name << "   " << name_old << endl;
 
-
+        ///Reading the images
         actual_frame = imread(name);
         previous_frame = imread(name_old);
-        namedWindow( "actual", WINDOW_AUTOSIZE);
-        namedWindow( "old", WINDOW_AUTOSIZE);
-        imshow("actual", actual_frame);
-        imshow("old",previous_frame);
-        waitKey(10);
+
+        ///Translation
+        //ROI
+        actual_frame = actual_frame(Rect(0,1*actual_frame.rows/3,
+                                         actual_frame.cols, 2*actual_frame.rows/3));
+        previous_frame = previous_frame(Rect(0,1*previous_frame.rows/3,
+                                             previous_frame.cols, 2*previous_frame.rows/3));
+
+        //SIFT detection
+        detector.detect(actual_frame,keypoints_actual);
+        detector.detect(previous_frame,keypoints_old);
+
+        //Matching characteristics
+        extractor.compute(actual_frame,keypoints_actual,descriptors_actual);
+        extractor.compute(previous_frame,keypoints_old,descriptors_old);
+        matcher.match(descriptors_actual,descriptors_old,matches);
+
+        ///visualitation
+        //drawing the feature's points
+        //drawKeypoints(actual_frame, keypoints_actual, output_actual);
+        //drawKeypoints(previous_frame, keypoints_old, output_old);
+        //imshow("actual", output_actual);
+        //imshow("old", output_old);
+         cv::drawMatches(actual_frame,keypoints_actual,
+                        previous_frame,keypoints_old,matches,img_matches);
+        imshow("matches",img_matches);
+        waitKey(1);
+        keypoints_actual.clear();
+        keypoints_old.clear();
+        descriptors_actual.release();
+        descriptors_old.release();
+        duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
+        std::cout<<"printf: "<< duration <<'\n';
     }
 
     return 0;
