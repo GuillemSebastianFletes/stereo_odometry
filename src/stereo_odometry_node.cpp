@@ -83,6 +83,9 @@ int main( int argc, char** argv )
     double x;
     double y;
 
+    std::vector<int> it_counter_actual;
+    std::vector<int> it_counter_old;
+
     for (int i = 1; i < 1101; i++)
     {
         start = std::clock();
@@ -119,8 +122,9 @@ int main( int argc, char** argv )
         media_angle = 0;
         contador = 0;
 
-        std::vector<int8_t> it_counter_actual;
-        std::vector<int8_t> it_counter_old;
+
+        it_counter_actual.clear();
+        it_counter_old.clear();
 
         //Getting points with matches between frames
         for (std::vector<cv::DMatch>::const_iterator it= matches.begin();it!= matches.end(); ++it)
@@ -152,7 +156,7 @@ int main( int argc, char** argv )
         media_distance = media_distance/contador;
         media_angle = media_angle/contador;
 
-        if (distance.empty())
+        if (it_counter_actual.empty() || it_counter_old.empty())
         {
             cout << "fail"<<endl;
         }
@@ -163,19 +167,54 @@ int main( int argc, char** argv )
         }
 
 
+        //cout << it_counter_old.size() << endl;
+
+        int test1;
+        int test;
+
+        //        for (int a = 0; a < it_counter_old.size(); a++)
+        //        {
+        //            //cout << "ieee k va" << endl;
+        //            test = it_counter_actual.at(a);
+        //            test1 = it_counter_old.at(a);
+
+        //            cout << "old  " <<  it_counter_actual.at(a) << endl;
+        //            cout << "new  " << test1 << endl;
+
+        //        }
+
+
+
+
         //if distance[i] && angle[i] belongs to the working area add the points to the new keypoint actual and new
-        if(it_counter_actual.size() == it_counter_old.size())
+        //it is necessary to take in account that keypoints_old/new haven't got the same size
+        if(keypoints_actual.size() > keypoints_old.size())
         {
-            for (int i =0; i!=it_counter_actual.size(); i++)
+            for (int i =0; i < keypoints_old.size(); i++)
             {
-                if(distance.at(i) > 0.5 * media_distance && distance.at(i) < 1.5 * media_distance)
+                if(distance.at(i) > 0.85 * media_distance && distance.at(i) < 1.15 * media_distance)
                 {
-                    if(angle.at(i) > 0.5 * media_angle && angle.at(i) < 1.5 * media_angle)
+                    if(angle.at(i) > 0.85 * media_angle && angle.at(i) < 1.15 * media_angle)
                     {
 
                         good_keypoints_actual.push_back(keypoints_actual.at(it_counter_actual.at(i)));
-
                         good_keypoints_old.push_back(keypoints_old.at(it_counter_old.at(i)));
+                    }
+                }
+            }
+        }
+
+        else
+        {
+            for (int j =0; j < keypoints_actual.size(); j++)
+            {
+                if(distance.at(j) > 0.85 * media_distance && distance.at(j) < 1.15 * media_distance)
+                {
+                    if(angle.at(j) > 0.85 * media_angle && angle.at(j) < 1.15 * media_angle)
+                    {
+
+                        good_keypoints_actual.push_back(keypoints_actual.at(it_counter_actual.at(j)));
+                        good_keypoints_old.push_back(keypoints_old.at(it_counter_old.at(j)));
                     }
                 }
             }
@@ -183,6 +222,8 @@ int main( int argc, char** argv )
 
         ///visualitation
         //drawing the feature's points
+        cout << good_keypoints_actual.size() << endl;
+        cout << good_keypoints_old.size() << endl;
         drawKeypoints(actual_frame, good_keypoints_actual, output_actual);
         drawKeypoints(previous_frame, good_keypoints_old, output_old);
         imshow("actual", output_actual);
