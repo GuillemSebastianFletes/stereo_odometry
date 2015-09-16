@@ -33,6 +33,13 @@ class stereo_odometry
     //methods before args.
 private:
 
+    void get_good_points( Mat &actual_frame, Mat &previous_frame);
+    void compute_disparity_map();
+    vector<cv::KeyPoint> keypoints_old;
+    vector<cv::KeyPoint> good_keypoints_actual;
+    vector<cv::KeyPoint> good_keypoints_old;
+    bool first_iteration;
+
 public:
 
     stereo_odometry();
