@@ -13,14 +13,20 @@ int main( int argc, char** argv )
 
     ///path variables
     char path[] = "/home/guillem/07/image_0/";
+    char path1[] = "/home/guillem/07/image_1/";
     char format[] = ".png";
-    char name[50];
-    char name_old[50];
+    char name_l[50];
+    char name_old_l[50];
+    char name_r[50];
+    char name_old_r[50];
     int n;
 
     ///images initialitation
-    Mat actual_frame;
-    Mat previous_frame;
+    Mat actual_frame_l;
+    Mat previous_frame_l;
+
+    Mat actual_frame_r;
+    Mat previous_frame_r;
 
 
     stereo_odometry odometria_estereo;
@@ -30,15 +36,25 @@ int main( int argc, char** argv )
     {
         start = std::clock();
          ///image name initialitation
-        n = sprintf(name,"%s%.6d%s", path, i, format);
-        n = sprintf(name_old,"%s%.6d%s",path,i-1,format);
+
+        //Izquierda
+        n = sprintf(name_l,"%s%.6d%s", path, i, format);
+        n = sprintf(name_old_l,"%s%.6d%s",path,i-1,format);
+        // cout << name << "   " << name_old << endl;
+
+        //Derecha
+        n = sprintf(name_r,"%s%.6d%s", path1, i, format);
+        n = sprintf(name_old_r,"%s%.6d%s",path1,i-1,format);
         // cout << name << "   " << name_old << endl;
 
         ///Reading the images
-        actual_frame = imread(name);
-        previous_frame = imread(name_old);
+        actual_frame_l = imread(name_l, CV_8UC1);
+        previous_frame_l = imread(name_old_l, CV_8UC1);
 
-        odometria_estereo.translation(actual_frame, previous_frame);
+        actual_frame_r = imread(name_r, CV_8UC1);
+        previous_frame_r = imread(name_old_r, CV_8UC1);
+
+        odometria_estereo.translation(actual_frame_l, previous_frame_l, actual_frame_r, previous_frame_r);
         duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
         std::cout<<"duration: "<< duration <<'\n';
 

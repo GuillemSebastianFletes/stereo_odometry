@@ -9,50 +9,79 @@ using namespace std;
 stereo_odometry::stereo_odometry()
 {
     first_iteration = true;
+    first_iteration_disparity = true;
 }
 stereo_odometry::~stereo_odometry(){}
 //stereo_odometry::init(){}
 
 ///Translation
 
-void stereo_odometry::translation(Mat &actual_frame, Mat &previous_frame)
+void stereo_odometry::translation(Mat &actual_frame_l, Mat &previous_frame_l, Mat &actual_frame_r, Mat &previous_frame_r)
 {
-
-    ///images initialitation
-    Mat output_actual;
-    Mat output_old;
-
     //ROI
-    actual_frame = actual_frame(Rect(0,1*actual_frame.rows/3,
-                                     actual_frame.cols, 2*actual_frame.rows/3));
-    previous_frame = previous_frame(Rect(0,1*previous_frame.rows/3,
-                                         previous_frame.cols, 2*previous_frame.rows/3));
+    actual_frame_l = actual_frame_l(Rect(0,1*actual_frame_l.rows/3,
+                                         actual_frame_l.cols, 2*actual_frame_l.rows/3));
+    previous_frame_l = previous_frame_l(Rect(0,1*previous_frame_l.rows/3,
+                                             previous_frame_l.cols, 2*previous_frame_l.rows/3));
+
+    actual_frame_r = actual_frame_r(Rect(0,1*actual_frame_r.rows/3,
+                                         actual_frame_r.cols, 2*actual_frame_r.rows/3));
+    previous_frame_r = previous_frame_r(Rect(0,1*previous_frame_r.rows/3,
+                                             previous_frame_r.cols, 2*previous_frame_r.rows/3));
+
+
     //Get the key points
-    get_good_points(actual_frame, previous_frame);
+    // get_good_points(actual_frame_l, previous_frame_l);
+
+
 
     //Compute disparity map
-   compute_disparity_map();
+    compute_disparity_map(actual_frame_l, previous_frame_l, actual_frame_r, previous_frame_r);
+
+    disparity_old = disparity_actual;
+}
+
+void stereo_odometry::compute_disparity_map(Mat &actual_frame_l, Mat &previous_frame_l, Mat &actual_frame_r, Mat &previous_frame_r)
+{
+    //SGBM variables initalitation
+
+    int minDisparity = 0;
+    int numDisparities = 80;
+    int SADWindowSize = 1;
+    int preFilterCap =0;
+    int uniquenessRatio = 0;
+    int P1 = 0;
+    int P2 = 0;
+    int speckleWindowSize = 0;
+    int speckleRange = 0;
+    int disp12MaxDiff = 0;
+    bool fullDP = false;
+
+    static StereoSGBM mystereoSGBM( minDisparity, numDisparities, SADWindowSize, P1, P2, disp12MaxDiff, preFilterCap, uniquenessRatio, speckleWindowSize, speckleRange, fullDP);
+
+    mystereoSGBM(actual_frame_l, actual_frame_r, disparity_actual);
 
 
+    if (first_iteration_disparity)
+    {
+        mystereoSGBM(previous_frame_l, previous_frame_r, disparity_old);
+    }
 
-    drawKeypoints(actual_frame, good_keypoints_actual, output_actual);
-    drawKeypoints(previous_frame, good_keypoints_old, output_old);
-    cout << "points actual: " << good_keypoints_actual.size() << endl;
-    cout << "points previous: " << good_keypoints_old.size() << endl;
-    imshow("actual", output_actual);
-    imshow("old", output_old);
+    ///Test
+    imshow("actual disparity", disparity_actual);
+    imshow("previous disparity", disparity_old);
     waitKey(1);
 
 }
 
-void stereo_odometry::compute_disparity_map()
+
+void stereo_odometry::get_good_points(Mat &actual_frame_l, Mat &previous_frame_l)
 {
+    ///images initialitation
+    Mat output_actual;
+    Mat output_old;
 
-}
 
-
-void stereo_odometry::get_good_points(Mat &actual_frame, Mat &previous_frame)
-{
     ///SIFT algorith variables
     vector<cv::KeyPoint> keypoints_actual;
     //    vector<cv::KeyPoint> keypoints_old;
@@ -97,16 +126,16 @@ void stereo_odometry::get_good_points(Mat &actual_frame, Mat &previous_frame)
     std::vector<int> it_counter_old;
 
     //SIFT detection
-    detector.detect(actual_frame,keypoints_actual);
+    detector.detect(actual_frame_l,keypoints_actual);
     if(first_iteration)
     {
-        detector.detect(previous_frame,keypoints_old);
+        detector.detect(previous_frame_l,keypoints_old);
         first_iteration = false;
     }
 
     //Matching characteristics
-    extractor.compute(actual_frame,keypoints_actual,descriptors_actual);
-    extractor.compute(previous_frame,keypoints_old,descriptors_old);
+    extractor.compute(actual_frame_l,keypoints_actual,descriptors_actual);
+    extractor.compute(previous_frame_l,keypoints_old,descriptors_old);
     matcher.match(descriptors_actual,descriptors_old,matches);
 
 
@@ -179,4 +208,13 @@ void stereo_odometry::get_good_points(Mat &actual_frame, Mat &previous_frame)
 
     keypoints_old.clear();
     keypoints_old = keypoints_actual;
+
+    ///Test
+    /*drawKeypoints(actual_frame_l, good_keypoints_actual, output_actual);
+    drawKeypoints(previous_frame_l, good_keypoints_old, output_old);
+    cout << "points actual: " << good_keypoints_actual.size() << endl;
+    cout << "points previous: " << good_keypoints_old.size() << endl;
+    imshow("actual", output_actual);
+    imshow("old", output_old);
+    waitKey(1);*/
 }
