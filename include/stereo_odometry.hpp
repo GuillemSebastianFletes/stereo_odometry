@@ -16,7 +16,9 @@
 #include <opencv2/legacy/legacy.hpp>
 #include <opencv2/objdetect/objdetect.hpp>
 #include "opencv2/video/tracking.hpp"
-
+#include <pcl/common/projection_matrix.h>
+#include <pcl/visualization/pcl_visualizer.h>
+ #include <pcl/point_types.h>
 
 
 

@@ -31,20 +31,23 @@ void stereo_odometry::translation(Mat &actual_frame_l, Mat &previous_frame_l, Ma
 
 
     //Get the key points
-    // get_good_points(actual_frame_l, previous_frame_l);
+    get_good_points(actual_frame_l, previous_frame_l);
 
 
 
-    //Compute disparity map
+    //Compute disparity map and the point cloud
     compute_disparity_map(actual_frame_l, previous_frame_l, actual_frame_r, previous_frame_r);
 
-    disparity_old = disparity_actual;
+
+
+
 }
 
 void stereo_odometry::compute_disparity_map(Mat &actual_frame_l, Mat &previous_frame_l, Mat &actual_frame_r, Mat &previous_frame_r)
 {
-    //SGBM variables initalitation
 
+
+    //SGBM variables initalitation
     int minDisparity = 0;
     int numDisparities = 80;
     int SADWindowSize = 1;
@@ -57,7 +60,20 @@ void stereo_odometry::compute_disparity_map(Mat &actual_frame_l, Mat &previous_f
     int disp12MaxDiff = 0;
     bool fullDP = false;
 
+    Mat disparity_actual;
+
     static StereoSGBM mystereoSGBM( minDisparity, numDisparities, SADWindowSize, P1, P2, disp12MaxDiff, preFilterCap, uniquenessRatio, speckleWindowSize, speckleRange, fullDP);
+
+    //point cloud variables(this will be rosparmeters)
+    double focal_distance;
+    double base_line;
+    double X;
+    double Y;
+    double Z;
+    int xr;
+    int yr;
+    pcl::PointCloud<pcl::PointXYZ> cloud;
+
 
     mystereoSGBM(actual_frame_l, actual_frame_r, disparity_actual);
 
@@ -67,10 +83,22 @@ void stereo_odometry::compute_disparity_map(Mat &actual_frame_l, Mat &previous_f
         mystereoSGBM(previous_frame_l, previous_frame_r, disparity_old);
     }
 
-    ///Test
-    imshow("actual disparity", disparity_actual);
-    imshow("previous disparity", disparity_old);
-    waitKey(1);
+    ///Test disparity
+//    imshow("actual disparity", disparity_actual);
+//    imshow("previous disparity", disparity_old);
+//    waitKey(1);
+
+for (int i=0; i < good_keypoints_actual.size(); i++)
+{
+    Z = (focal_distance*base_line)/disparity_actual.at(good_keypoints_actual[i].pt.x,good_keypoints_actual[i].pt.y);
+    X = (Z*xr)/focal_distance;
+    Y = (Z*yr)/focal_distance;
+
+    cloud.push_back (pcl::PointXYZ (X, Y, Z));
+}
+
+
+     disparity_old = disparity_actual;
 
 }
 
